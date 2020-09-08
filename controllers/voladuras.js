@@ -8,7 +8,7 @@ const getVoladuras = async (req, res) => {
     const procesos = [
       { procesoId: 1, nombre: 'Caracterizar Voladura', vols: [] },
       { procesoId: 2, nombre: 'Crear Estructuras', vols: [] },
-      { procesoId: 6, nombre: 'Cargar Voladura a Modular', vols: [] }
+      { procesoId: 6, nombre: 'Cargar Voladura a Modular', vols: [] },
     ];
     const ProcessIds = [1, 6, 2];
 
@@ -17,24 +17,50 @@ const getVoladuras = async (req, res) => {
         {
           model: Proceso,
           where: {
-            procesoId: { [Op.in]: ProcessIds }
-          }
+            procesoId: { [Op.in]: ProcessIds },
+          },
         },
         {
-          model: TipoVoladura
-        }
-      ]
+          model: TipoVoladura,
+        },
+      ],
     });
 
     for (const p of procesos) {
       for (const v of voladuras) {
         if (v.procesos[0].procesoId === p.procesoId) {
-          p.vols.push(v);
+          const {
+            voladuraId,
+            nombre,
+            comentario,
+            tiposVoladura: { nombre: tipoVoladura },
+          } = v;
+          p.vols.push({
+            voladuraId,
+            nombre,
+            comentario,
+            tipoVoladura,
+          });
         }
       }
     }
 
-    res.status(200).send({ vols: procesos });
+    res.status(200).send({ blastProcesses: procesos });
+  } catch (error) {
+    console.log('error:', error);
+    res.status(400).send({ error: 'Ocurrió un error al consultar la información' });
+  }
+};
+
+const getVoladura = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const voladura = await Voladura.findOne({
+      where: { voladuraId: id },
+      include: { model: TipoVoladura },
+    });
+
+    res.status(200).send({ blasting: voladura });
   } catch (error) {
     console.log('error:', error);
     res.status(400).send({ error: 'Ocurrió un error al consultar la información' });
@@ -42,5 +68,6 @@ const getVoladuras = async (req, res) => {
 };
 
 module.exports = {
-  getVoladuras
+  getVoladuras,
+  getVoladura,
 };
