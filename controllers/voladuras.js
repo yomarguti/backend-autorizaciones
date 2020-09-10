@@ -60,6 +60,12 @@ const getVoladura = async (req, res) => {
       include: { model: TipoVoladura },
     });
 
+    if (!voladura) {
+      return res
+        .status(400)
+        .send({ error: 'No se encontro informacion de la voladura consultada' });
+    }
+
     res.status(200).send({ blasting: voladura });
   } catch (error) {
     console.log('error:', error);
@@ -67,7 +73,25 @@ const getVoladura = async (req, res) => {
   }
 };
 
+const getVoladurasByProceso = async (req, res) => {
+  try {
+    const { procesoId } = req.params;
+    const proceso = await Proceso.findOne({ where: { procesoId } });
+    const voladuras = await proceso.getVoladuras({ raw: true });
+
+    if (!voladuras) {
+      return res
+        .status(400)
+        .send({ error: 'No se encontro informacion de la voladuras consultada' });
+    }
+    res.status(200).send({ blastings: voladuras });
+  } catch (error) {
+    res.status(400).send({ error: 'Ocurrió un error al consultar la información' });
+  }
+};
+
 module.exports = {
   getVoladuras,
   getVoladura,
+  getVoladurasByProceso,
 };
