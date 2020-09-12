@@ -1,6 +1,7 @@
 const Voladura = require('../models/voladura');
 const Proceso = require('../models/proceso');
 const TipoVoladura = require('../models/tiposVoladura');
+const TiposVoladura = require('../models/tiposVoladura');
 const Op = require('sequelize').Op;
 
 const getVoladuras = async (req, res) => {
@@ -91,8 +92,33 @@ const getVoladurasByProceso = async (req, res) => {
   }
 };
 
+const createNewAuthorization = async (req, res) => {
+  try {
+    const { blastingName, seam, shovel, blastType } = req.body;
+    console.log('blastType:', blastType);
+    const tipoVoladura = await TiposVoladura.findOne({ where: { nombre: blastType }, raw: true });
+    const proceso = await Proceso.findOne({ where: { nombre: 'Caracterizar Voladura' } });
+
+    const voladura = await Voladura.create({
+      nombre: blastingName,
+      anio: new Date().getFullYear(),
+      pala: shovel,
+      manto: seam,
+      tipoVoladuraId: tipoVoladura.tipoVoladuraId,
+    });
+
+    await voladura.addProceso(proceso, { through: { activo: true, fecha: new Date() } });
+
+    res.status(200).send({ resMessage: 'Proceso Iniciado Correctamente' });
+  } catch (error) {
+    console.log('error:', error);
+    res.status(400).send({ error: 'Ocurrió un error al consultar la información' });
+  }
+};
+
 module.exports = {
   getVoladuras,
   getVoladura,
   getVoladurasByProceso,
+  createNewAuthorization,
 };
